@@ -1,0 +1,316 @@
+<html>
+<head>
+
+<meta charset="UTF-8">
+<style type="text/css">
+.width500px {
+	width: 400px;
+	display: inline-block;
+}
+
+.center {
+	text-align: center;
+	width: 305px;
+}
+
+#startBtn {
+	border: solid;
+	color: black;
+	background-color: #5AAFFF;
+	width: 50px;
+	padding: 5px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+#restartBtn {
+	border: solid;
+	color: black;
+	background-color: #5AAFFF;
+	width: 55px;
+	padding: 5px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+#cardTable {
+	border-collapse: collapse;
+}
+
+#cardTable td {
+	border: 1px solid #5AAFFF;
+	width: 75px;
+	height: 121px;
+	text-align: center;
+	cursor: pointer;
+	border: solid black;
+}
+
+#cardTable td img {
+	max-width: 70px;
+}
+
+#cardTable td span {
+	font-size: 25pt;
+	font-weight: bold;
+	color: #5AAFFF;
+	display: none;
+}
+
+#countDown {
+	background-color: #5AAFFF;
+	color: white;
+	font-size: 30pt;
+	color: black;
+	border: solid black;
+}
+
+#info {
+	width: 300px;
+	height: 250px;
+	background-color: #DDDDDD;
+	color: white;
+	padding-top: 230px;
+	border: solid black;
+}
+</style>
+<script>
+	// 게임 상태
+	let gameState = '';
+
+	// 열린 카드 src
+	let openCardId = '';
+	let openCardId2 = '';
+	let step;
+	window.onload = function() { //onclick을 쓰려면 있어야 됨 
+		document.querySelector("#startBtn").onclick = function() {
+			startGame(1);
+		}; //클릭 이벤트 하는방법
+/*		
+		// td에 id값으로 접근해서 클릭 이벤트 하는 방법
+		document.querySelector("#changeBtn").onclick = function() { //change 버튼 눌렀을 때 제목 바꾸기 
+			document.querySelector("#change").innerText = "같은 원숭이를 맞춰라!"
+			document.querySelector("#change").style.color = 'blue'; //.style = css 관련된 거 뒤에는 사용할 속성
+		};
+*/
+
+//td 자체에 접근해서 클릭 이벤트 하는 방법(모든 h2가 바뀐다. 여기선 h2 하나여서 괜찮은데 여러개면 querySelectorAll 로 해야 된다.)
+     
+     document.querySelector("#changeBtn").onclick = function() {
+	    document.querySelector("h2").innerText = "같은 원숭이를 찾아라!"
+	    document.querySelector("h2").style.color ='blue';
+	    document.querySelector("#changeBtn").classList.remove("center"); 
+	    //classList = > 안에 내장되어있는 메서드를 통해 해당 엘리먼트의 클래스를 제어
+		
+	}
+
+
+	}
+
+	// 난수 생성 함수
+	function generateRandom(min, max) {
+		let ranNum = Math.floor(Math.random() * (max - min + 1) + min);
+		return ranNum;
+	}
+
+	let cards; // 카드 목록
+	let score = 0; // 점수
+	let openedCtn = 0; // 맞춘 카드 갯수
+
+	// 카드 배치
+	function setTable() { //script에서 배열 쓰는 법
+		cards = [ 'travel (1).png', 'travel (1).png', 'travel (2).png',
+				'travel (2).png', 'travel (3).png', 'travel (3).png',
+				'travel (4).png', 'travel (4).png', 'travel (5).png',
+				'travel (5).png', 'travel (6).png', 'travel (6).png',
+				'travel (7).png', 'travel (7).png', 'travel (8).png',
+				'travel (8).png' ];
+
+		let cardTableCode = '<tr>';
+		for (let i = 0; i < 16; i++) {
+			if (i > 0 && i % 4 == 0) {
+				cardTableCode += '</tr><tr>';
+			}
+			let idx = generateRandom(0, 15 - i);
+			let img = cards.splice(idx, 1);//splice 첫번째 값부터 1단위로 자른다 
+			cardTableCode += '<td id="card'+i+'"><img src="travel/'+img+'"><span>?</span></td>';
+		}
+		cardTableCode += '</tr>';
+		document.querySelector('#cardTable').innerHTML = cardTableCode;
+	}
+
+	// 카드 전체 가리기
+	function hiddenCards() {
+		const tdImg = document.querySelectorAll('#cardTable td img');
+		for (let i = 0; i < tdImg.length; i++) {
+			tdImg[i].style.display = 'none'
+			document.querySelectorAll('#cardTable td span')[i].style.display = 'block' //숨길지 보여줄지 정할 때는 display 사용
+		}
+	}
+	// 카드 전체 보여주기
+	function openCards() {
+		const tdImg = document.querySelectorAll('#cardTable td img');
+		for (let i = 0; i < tdImg.length; i++) {
+			tdImg[i].style.display = 'block'
+			document.querySelectorAll('#cardTable td span')[i].style.display = 'none'
+		}
+	}
+
+	// 게임 시작
+	function startGame(stepParam) {
+		step = stepParam;
+		let sec = 6;
+		let time = 6000;
+		if (step != 1) {
+			sec = 3;
+			time = 3000;
+		}
+
+		document.querySelector('#info').style.display = 'none' // 안내 문구 가리기
+		scoreInit(); // 점수 초기화
+		setTable(); // 카드 배치
+
+		//카운트 다운 텍스트 변경
+		function setText() {
+			document.querySelector('#countDown').innerText = --sec;
+		}
+
+		//카운트 다운
+		let intervalID = setInterval(setText, 1000);
+		setTimeout(function() {
+			clearInterval(intervalID);
+			document.querySelector('#countDown').innerText = 'START';
+			hiddenCards();
+			gameState = '';
+		}, time);
+
+		// 카드 선택 시
+		const gameImgs = document.querySelectorAll("#cardTable td")
+		for (let gameImg = 0; gameImg < gameImgs.length; gameImg++) {
+			gameImgs[gameImg]
+					.addEventListener(
+							'click',
+							function(event) {
+								if (openCardId2 != '')
+									return; // 2개 열려있는데 또 누른 경우 return
+								if (this.classList.contains('opened'))//classList 클래스 접근자
+									return; // 열려있는 카드를 또 누른 경우                
+								this.classList.add('opened'); // 열려있다는 것을 구분하기 위한 class 추가, class 추가 함수
+
+								if (openCardId == '') {//첫번째 카드 클릭할 때
+									this.querySelector('img').style.display = 'block' //카드 이미지를 보여줌
+									this.querySelector('span').style.display = 'none' //뒷면을 숨김
+									openCardId = this.id;
+								} else { //두번째 카드 클릭할 때
+									if (openCardId == openCardId2)
+										return; //같은 카드 누른 경우 return
+
+									this.querySelector('img').style.display = 'block'
+									this.querySelector('span').style.display = 'none'
+
+									let openCardSrc = document.querySelector(
+											'#' + openCardId).querySelector(
+											'img').src;
+									let openCardSrc2 = this
+											.querySelector('img').src;
+									openCardId2 = this.id;
+
+									if (openCardSrc == openCardSrc2) { // 일치
+										openCardId = '';
+										openCardId2 = '';
+										scorePlus();
+										if (++openedCtn == 8) { //모든 카드를 맞췄을 때
+											if (step == 1
+													&& confirm("다음 단계로 넘어가시려면 (예)")) { //1단계 클리어 후 2단계로 진입
+												startGame(2);
+											} else if (step == 2) { //2단계 클리어
+												alert("코알라가 행복해요!");
+												document
+														.querySelector('#countDown').innerText = 'HAPPY';
+											} else {
+												alert("코알라가 기다릴게요!");
+												document
+														.querySelector('#countDown').innerText = 'CLEAR';
+											}
+										}
+									} else { // 불일치
+										scoreMinus();
+										if (!gameEnd()) {
+											setTimeout(back, 500);
+										}
+									}
+								}
+							})
+		}
+	}
+	//게임종료
+	function gameEnd() {
+		if (score <= -20) {
+			alert('game over\n' + score + '점 입니다.');
+			document.querySelector('#countDown').innerText = 'GAME OVER';
+			openCards();
+			return true;
+		}
+		return false;
+	}
+
+	// 두개의 카드 다시 뒤집기
+	function back() {
+		document.querySelector('#' + openCardId).querySelector('img').style.display = 'none'
+		document.querySelector('#' + openCardId).querySelector('span').style.display = 'block'
+		document.querySelector('#' + openCardId2).querySelector('img').style.display = 'none'
+		document.querySelector('#' + openCardId2).querySelector('span').style.display = 'block'
+		document.querySelector('#' + openCardId).classList.remove('opened');
+		document.querySelector('#' + openCardId2).classList.remove('opened');
+		openCardId = '';
+		openCardId2 = '';
+	}
+
+	// 점수 초기화
+	function scoreInit() {
+		score = 0;
+		openedCtn = 0;
+		document.querySelector('#score').innerText = score;
+	}
+	// 점수 증가
+	function scorePlus() {
+		score += 10;
+		document.querySelector('#score').innerText = score;
+
+	}
+	// 점수 감소
+	function scoreMinus() {
+		score -= 5;
+		document.querySelector('#score').innerText = score;
+		if (step != 1)
+			score -= 5;
+		document.querySelector('#score').innerText = score;
+	}
+</script>
+</head>
+<body>
+	<div class='center'>
+		<div>
+			<h2 id=change>같은 코알라를 맞춰라!</h2>
+			<table id='menuTable'>
+				<tr>
+					<td class='alignLeft'>
+						<button id='startBtn'>start</button>
+						<button class="center" id='changeBtn'>change</button>
+					</td>
+					<td class='alignRight'><span>score : <span id='score'>0</span></span>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div>
+			<div id='countDown'>READY</div>
+			<table id='cardTable'>
+			</table>
+			<div id='info'>
+				start 버튼을 눌러주세요<br>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
